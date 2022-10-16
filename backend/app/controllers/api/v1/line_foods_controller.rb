@@ -3,6 +3,22 @@ module Api
     class LineFoodsController < ApplicationController
       before_action :set_food, only: %i[create]
 
+      def index
+        # 未注文のデータを取得
+        line_foods = LineFood.active
+        if line_foods.exists?
+          render json: {
+            line_food_ids: line_foods.map { |line_food| line_food.id },
+            restaurant: line_foods[0].restaurant,
+            # 保守性の観点でなるべくデータの計算などはサーバーサイドで担当すべきである。
+            count: line_foods.sum { |line_food| line_food[:count] },
+            amount: line_foods.sum { |line_food| line_food.total_amount }
+          }, status: :ok
+        else
+          render json: {}, status: :no_content
+        end
+      end
+
       def create
         # 未注文があれば早期return
         if LineFood.active.other_restaurant(@ordered_food.restaurant.id).exists?
@@ -41,7 +57,7 @@ module Api
             active: true
           }
         else
-          # build_xxxxでインスタンスを新規作成
+          # build_xxxxでインスタンスを新規作成(まだDB保存していない)
           @line_food = ordered_food.build_line_food(
             count: params[:count],
             restaurant: ordered_food.restaurant,
