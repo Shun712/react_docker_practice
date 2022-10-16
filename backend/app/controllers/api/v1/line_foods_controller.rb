@@ -1,7 +1,7 @@
 module Api
   module V1
     class LineFoodsController < ApplicationController
-      before_action :set_food, only: %i[create]
+      before_action :set_food, only: %i[create replace]
 
       def index
         # 未注文のデータを取得
@@ -20,7 +20,7 @@ module Api
       end
 
       def create
-        # 未注文があれば早期return
+        # 他店舗での未注文があれば早期return
         if LineFood.active.other_restaurant(@ordered_food.restaurant.id).exists?
           return render json: {
             # すでに作成されている他店舗の情報
@@ -28,6 +28,24 @@ module Api
             # リクエストで作成しようとした新店舗の情報
             new_restaurant: Food.find(params[:food_id]).restaurant.name,
           }, status: :not_acceptable
+        end
+
+        set_line_food(@ordered_food)
+
+        if @line_food.save
+          render json: {
+            line_food: @line_food
+          }, status: :created
+        else
+          render json: {}, status: :internal_server_error
+        end
+      end
+
+      def replace
+        # 他店舗での未注文データを取得
+        LineFood.active.other_restaurant(@ordered_food.restaurant.id).each do |line_food|
+          # 論理削除(activeというカラムにfalseを入れるなどして、データを非活性の状態にすること)
+          line_food.update_attribute(:active, false)
         end
 
         set_line_food(@ordered_food)
