@@ -7,6 +7,7 @@ class LineFood < ApplicationRecord
 
   # モデルそのものや関連するオブジェクトに対するクエリを指定
   scope :active, -> { where(active: true) }
+  # 他店舗でアクティブ(未注文)なLineFoodを取得
   scope :other_restaurant, -> (picked_restaurant_id) { where.not(restaurant_id: picked_restaurant_id) }
 
   def total_amount
