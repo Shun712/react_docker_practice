@@ -27,6 +27,10 @@ function App() {
                     path="/orders"
                     element={<Orders/>}
                 />
+                <Route
+                    path="/restaurants/:restaurantsId/foods"
+                    element={<Foods/>}
+                />
             </Routes>
         </Router>
     );
