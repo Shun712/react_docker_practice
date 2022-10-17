@@ -1,8 +1,15 @@
-import React, {Fragment, useEffect} from "react";
+import React, {Fragment, useReducer, useEffect} from "react";
 import styled from 'styled-components';
 
 // apis
 import {fetchRestaurants} from '../apis/restaurants';
+
+// reducers
+import {
+    initialState,
+    restaurantsActionTypes,
+    restaurantsReducer,
+} from "../reducers/restaurants";
 
 // images
 import MainLogo from '../images/logo.png';
@@ -27,10 +34,21 @@ const MainCover = styled.img`
 `;
 
 export const Restaurants = () => {
+    // コンポーネント内で、stateとdispatchを扱えるようになる。
+    const [state, dispatch] = useReducer(restaurantsReducer, initialState);
+
     useEffect(() => {
+        dispatch({type: restaurantsActionTypes.FETCHING});
         fetchRestaurants()
             .then((data) =>
-                console.log(data)
+                // payloadに渡したデータがrestaurantListに入れられる。
+                // これらのデータはstateに入り、state.restaurantsListで参照できる。
+                dispatch({
+                    type: restaurantsActionTypes.FETCH_SUCCESS,
+                    payload: {
+                        restaurants: data.restaurants
+                    }
+                })
             )
     }, [])
 
@@ -42,6 +60,13 @@ export const Restaurants = () => {
             <MainCoverImageWrapper>
                 <MainCover src={MainCoverImage} alt="main cover"/>
             </MainCoverImageWrapper>
+            {
+                state.restaurantsList.map(restaurant =>
+                    <div key={restaurant.id}>
+                        {restaurant.name}
+                    </div>
+                )
+            }
         </Fragment>
     )
 }
